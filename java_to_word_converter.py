@@ -1,11 +1,9 @@
 import os
-from docx import Document
-from docx.shared import Pt
 
-def processar_arquivo(file_path, documento):
+def processar_arquivo(file_path, output_file):
     _, file_name = os.path.split(file_path)
-    documento.add_heading(f'Arquivo: {file_name}', level=2)
-    
+    output_file.write(f'Arquivo: {file_name}\n')
+
     try:
         with open(file_path, 'r', encoding='utf-8') as file:
             conteudo = file.read()
@@ -14,40 +12,38 @@ def processar_arquivo(file_path, documento):
             with open(file_path, 'r', encoding='latin-1') as file:
                 conteudo = file.read()
         except Exception as e:
-            documento.add_paragraph(f"Erro ao ler o arquivo: {str(e)}")
+            output_file.write(f"Erro ao ler o arquivo: {str(e)}\n")
             return
     except Exception as e:
-        documento.add_paragraph(f"Erro ao processar o arquivo: {str(e)}")
+        output_file.write(f"Erro ao processar o arquivo: {str(e)}\n")
         return
-    
-    p = documento.add_paragraph()
-    run = p.add_run(conteudo)
-    run.font.name = 'Courier New'
-    run.font.size = Pt(9)
 
-def percorrer_diretorios(root_dir, documento):
+    output_file.write(conteudo + '\n\n')
+
+def percorrer_diretorios(root_dir, output_file):
     for subdir, dirs, files in os.walk(root_dir):
         rel_path = os.path.relpath(subdir, root_dir)
-        documento.add_heading(f'Diretório: {rel_path}', level=1)
-        
+        output_file.write(f'Diretório: {rel_path}\n')
+
         for file in files:
             if file.endswith(('.java', '.xml', '.properties', '.gradle', '.md')):
                 file_path = os.path.join(subdir, file)
-                processar_arquivo(file_path, documento)
+                processar_arquivo(file_path, output_file)
 
 def main():
-    root_dir = 'C:/Users/Latitude 5280/IdeaProjects/podoc'
-    documento = Document()
-    documento.add_heading('Projeto Java: podoc', level=0)
+    # Obter o diretório de execução atual
+    root_dir = os.getcwd()
 
-    percorrer_diretorios(root_dir, documento)
+    # Definir o nome do arquivo de saída com base no diretório atual
+    output_path = os.path.join(root_dir, 'saida_projeto.txt')
 
-    output_path = 'G:/Meu Drive/Projetos/podoc.docx'
     try:
-        documento.save(output_path)
-        print(f"Arquivo Word criado com sucesso em {output_path}")
+        with open(output_path, 'w', encoding='utf-8') as output_file:
+            output_file.write(f'Projeto Java: {os.path.basename(root_dir)}\n\n')
+            percorrer_diretorios(root_dir, output_file)
+        print(f"Arquivo de texto criado com sucesso em {output_path}")
     except Exception as e:
-        print(f"Erro ao salvar o arquivo Word: {str(e)}")
+        print(f"Erro ao salvar o arquivo de texto: {str(e)}")
 
 if __name__ == "__main__":
     main()
