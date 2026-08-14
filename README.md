@@ -1,58 +1,107 @@
-# conversor-java-Word
-# Java Project to Word Converter
+# javatotxt
 
-Este script Python converte um projeto Java completo em um documento Word, facilitando a revisão e documentação do código-fonte.
+Junta um projeto Java inteiro num único arquivo de texto. Percorre as pastas, pega o código-fonte e empilha tudo em `saida_projeto.txt`.
 
-## Funcionalidades
+Repositório: [github.com/Luizhp86/javatotxt](https://github.com/Luizhp86/javatotxt)
 
-- Percorre recursivamente um diretório de projeto Java
-- Processa arquivos .java, .xml, .properties, .gradle e .md
-- Cria um documento Word estruturado com o conteúdo do projeto
-- Formata o código-fonte para melhor legibilidade no documento Word
+---
 
-## Requisitos
+## Para que serve
+
+Quando você precisa do projeto *como um bloco só*, não como dezenas de arquivos soltos.
+
+Casos em que isso ajuda:
+
+- **colocar o código num LLM** (ChatGPT, Claude, Gemini, Ollama) para pedir resumo, refatoração, busca de bug ou documentação
+- **revisão e auditoria** — um único arquivo para buscar, imprimir ou anexar
+- **handoff** — mandar o fonte para alguém que não vai clonar o Git
+- **indexar / RAG** — gerar um corpus textual do módulo Java
+
+Não compila, não analisa e não formata como IDE. Só coleta e concatena.
+
+---
+
+## Como o motor funciona
+
+Um script Python, sem dependência externa (`java_to_word_converter.py` — o nome é histórico; a saída é `.txt`).
+
+1. Parte do diretório atual (`os.getcwd()`)
+2. Caminha todas as subpastas (`os.walk`)
+3. Para cada arquivo com extensão `.java`, `.xml`, `.properties`, `.gradle` ou `.md`:
+   - escreve o nome do arquivo
+   - escreve o conteúdo (UTF-8; se falhar, tenta Latin-1)
+4. Grava `saida_projeto.txt` na raiz de onde você rodou o comando
+
+Pastas de build (`target`, `build`) entram na caminhada se existirem. Se o volume ficar grande, rode a partir do módulo que importa (ex.: `src/`) ou limpe artefatos antes.
+
+---
+
+## Como usar
+
+### Requisitos
 
 - Python 3.6+
-- python-docx
+- Nenhuma biblioteca extra (`pip` não é necessário)
 
-## Instalação
+### Uso rápido
 
-1. Clone este repositório:
-   ```
-   git clone https://github.com/seu-usuario/java-to-word-converter.git
-   ```
+Coloque o script na raiz do projeto Java (ou copie o `.py` para lá) e rode:
 
-2. Navegue até o diretório do projeto:
-   ```
-   cd java-to-word-converter
-   ```
+```bash
+git clone https://github.com/Luizhp86/javatotxt.git
+cd /caminho/do/seu/projeto-java
+python /caminho/do/javatotxt/java_to_word_converter.py
+```
 
-3. Instale as dependências:
-   ```
-   pip install python-docx
-   ```
+Ou, se o script já estiver na pasta do projeto:
 
-## Uso
+```bash
+python java_to_word_converter.py
+```
 
-1. Abra o arquivo `java_to_word_converter.py` e modifique as seguintes variáveis conforme necessário:
-   - `root_dir`: O caminho para o diretório raiz do seu projeto Java
-   - `output_path`: O caminho onde você deseja salvar o documento Word gerado
+Saída:
 
-2. Execute o script:
-   ```
-   python java_to_word_converter.py
-   ```
+```
+saida_projeto.txt
+```
 
-3. O script processará o projeto e criará um arquivo Word no local especificado.
+Cabeçalho típico:
 
-## Personalização
+```
+Projeto Java: meu-servico
 
-Você pode modificar o script para incluir ou excluir tipos específicos de arquivos, alterar a formatação do documento ou adicionar informações extras conforme necessário.
+Diretório: .
+Arquivo: pom.xml
+...
+Diretório: src\main\java\com\exemplo
+Arquivo: Application.java
+package com.exemplo;
+...
+```
 
-## Contribuição
+### Ajustar o que entra
 
-Contribuições são bem-vindas! Sinta-se à vontade para abrir issues ou enviar pull requests com melhorias.
+No próprio script, a linha que filtra extensões:
+
+```python
+if file.endswith(('.java', '.xml', '.properties', '.gradle', '.md')):
+```
+
+Inclua `.kt`, `.yml`, `.sql` etc. se o módulo tiver. Exclua `.xml` se não quiser `pom.xml` / `AndroidManifest` no pacote.
+
+Para mudar o nome do arquivo de saída, edite `output_path` em `main()`.
+
+---
+
+## Limites (de propósito)
+
+- Não ignora `target/`, `.git/` ou `node_modules/` — rode na pasta certa
+- Não recebe caminho por argumento: o diretório de trabalho é a origem
+- Arquivos binários das extensões listadas podem gerar lixo; o script tenta Latin-1 e segue
+- Projetos enormes geram `.txt` grande demais para alguns modelos — nesse caso, rode por módulo
+
+---
 
 ## Licença
 
-Este projeto está licenciado sob a [MIT License](LICENSE).
+MIT. Use e adapte à vontade.
